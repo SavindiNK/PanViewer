@@ -1,0 +1,41 @@
+import numpy as np
+import cv2
+import glob
+
+# termination criteria
+criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+
+# prepare object points
+obj_p = np.zeros((6*7,3), np.float32)
+obj_p[:,:2] = np.mgrid[0:7, 0:6].T.reshape(-1,2)
+
+# arrays to store object points
+obj_points = []
+img_points = []
+img_shape = None
+
+images = glob.glob('C:\Users\Charith\Downloads\OpenCV 3.2\opencv\sources\samples\data\left??.jpg')
+
+for file_name in images:
+    img = cv2.imread(file_name)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img_shape = gray.shape
+    # find chess board corners
+    ret, corners = cv2.findChessboardCorners(gray, (7,6), None)
+
+    # if found obj points, image points after refining them
+    if ret == True:
+        obj_points.append(obj_p)
+        cv2.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria)
+        img_points.append(corners)
+
+        #draw and display corners
+        cv2.drawChessboardCorners(img, (7,6), corners, ret)
+
+ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(obj_points, img_points, img_shape,None,None)
+
+np.savetxt('./calibration_data/calib.txt', mtx)
+
+x = np.load('./calibration_data/calib.txt')
+
+print x
